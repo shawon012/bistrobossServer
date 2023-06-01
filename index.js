@@ -28,6 +28,21 @@ async function run() {
         const menuCollection = client.db("bistroDb").collection("menuCollection");
         const reviewsCollection = client.db("bistroDb").collection("reviewsCollection");
         const cartCollection = client.db("bistroDb").collection("carts");
+        const usersCollection = client.db("bistroDb").collection("users");
+
+
+        // user related apis
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            const query = { email: user.email }
+            const existingUser = await usersCollection.findOne(query);
+
+            if (existingUser) {
+                return res.send({ message: 'user already exists' })
+            }
+            const result = await usersCollection.insertOne(user);
+            res.send(result);
+        });
 
         app.get('/menu', async (req, res) => {
             const result = await menuCollection.find().toArray();
@@ -40,12 +55,12 @@ async function run() {
 
         // cart collection
 
-        app.get('/carts', async(req, res) =>{
-            const email = req.query.email 
-            if(!email){
+        app.get('/carts', async (req, res) => {
+            const email = req.query.email
+            if (!email) {
                 res.send([])
             }
-            const query = {email: email};
+            const query = { email: email };
             const result = await cartCollection.find(query).toArray();
             res.send(result)
         })
@@ -57,9 +72,9 @@ async function run() {
             res.send(result);
         })
 
-        app.delete('/carts/:id', async(req, res) =>{
+        app.delete('/carts/:id', async (req, res) => {
             const id = req.params.id
-            const query = {_id: new ObjectId(id)}
+            const query = { _id: new ObjectId(id) }
             const result = await cartCollection.deleteOne(query);
             res.send(result);
         })
