@@ -1,6 +1,7 @@
 const express = require('express');
 require('dotenv').config()
 const app = express();
+const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const port = process.env.PORT || 5000;
 // middleware
@@ -30,13 +31,21 @@ async function run() {
         const cartCollection = client.db("bistroDb").collection("carts");
         const usersCollection = client.db("bistroDb").collection("users");
 
+        // jwt related apis
+
+        app.post('/jwt', (req, res) => {
+            const user = req.body;
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+
+            res.send({ token })
+        })
 
         // user related apis
 
         app.get('/users', async (req, res) => {
             const result = await usersCollection.find().toArray();
             res.send(result);
-          });
+        });
 
         app.post('/users', async (req, res) => {
             const user = req.body;
@@ -49,6 +58,21 @@ async function run() {
             const result = await usersCollection.insertOne(user);
             res.send(result);
         });
+
+        app.patch('/users/admin/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log(id);
+            const filter = { _id: new ObjectId(id) };
+            const updateDoc = {
+                $set: {
+                    role: 'admin'
+                },
+            };
+
+            const result = await usersCollection.updateOne(filter, updateDoc);
+            res.send(result);
+
+        })
 
         app.get('/menu', async (req, res) => {
             const result = await menuCollection.find().toArray();
